@@ -51,12 +51,13 @@ int main()
 
 	cv::VideoCapture source("yolo_test.mp4");
 
-	auto net = cv::dnn::readNetFromDarknet("yolo/yolov4-tiny.cfg",
+	cv::dnn::Net net = cv::dnn::readNetFromDarknet("yolo/yolov4-tiny.cfg",
 		"yolo/yolov4-tiny.weights");
 	if (CUDA)  // GPU
 	{
 		net.setPreferableBackend(cv::dnn::DNN_BACKEND_CUDA);
-		net.setPreferableTarget(cv::dnn::DNN_TARGET_CUDA);
+		//net.setPreferableTarget(cv::dnn::DNN_TARGET_CUDA);
+		net.setPreferableTarget(cv::dnn::DNN_TARGET_CUDA_FP16);  // using FP16
 	}
 	else  // CPU
 	{
@@ -159,8 +160,10 @@ int main()
 
 		auto total_end = std::chrono::steady_clock::now();
 
-		float inference_fps = 1000.0f / std::chrono::duration_cast<std::chrono::milliseconds>(dnn_end - dnn_start).count();
-		float total_fps = 1000.0f / std::chrono::duration_cast<std::chrono::milliseconds>(total_end - total_start).count();
+		float inference_fps = 1000.0f / 
+			std::chrono::duration_cast<std::chrono::milliseconds>(dnn_end - dnn_start).count();
+		float total_fps = 1000.0f
+			/ std::chrono::duration_cast<std::chrono::milliseconds>(total_end - total_start).count();
 		std::ostringstream stats_ss;
 		stats_ss << std::fixed << std::setprecision(2);
 		stats_ss << "Inference FPS: " << inference_fps << ", Total FPS: " << total_fps;

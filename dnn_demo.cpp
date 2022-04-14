@@ -13,9 +13,9 @@
 #include <opencv2/imgproc.hpp>
 #include <opencv2/highgui.hpp>
 
-constexpr float CONFIDENCE_THRESHOLD(0.0f);
-constexpr float NMS_THRESHOLD(0.4f);
-constexpr int NUM_CLASSES(80);
+constexpr static float CONFIDENCE_THRESHOLD(0.0f);
+constexpr static float NMS_THRESHOLD(0.4f);
+constexpr static int NUM_CLASSES(80);
 
 
 // colors for bounding boxes
@@ -53,12 +53,12 @@ int main()
 
 	auto net = cv::dnn::readNetFromDarknet("yolo/yolov4-tiny.cfg", 
 		"yolo/yolov4-tiny.weights");
-	if (CUDA)
+	if (CUDA)  // GPU
 	{
 		net.setPreferableBackend(cv::dnn::DNN_BACKEND_CUDA);
 		net.setPreferableTarget(cv::dnn::DNN_TARGET_CUDA);
 	}
-	else
+	else  // CPU
 	{
 		net.setPreferableBackend(cv::dnn::DNN_BACKEND_OPENCV);
 		net.setPreferableTarget(cv::dnn::DNN_TARGET_CPU);
@@ -83,16 +83,16 @@ int main()
 		net.setInput(blob);
 
 		auto dnn_start = std::chrono::steady_clock::now();
-		net.forward(detections, output_names);
+		net.forward(detections, output_names);  // inference
 		auto dnn_end = std::chrono::steady_clock::now();
 
 		std::vector<int> indices[NUM_CLASSES];
-		std::vector<cv::Rect> boxes[NUM_CLASSES];
 		std::vector<float> scores[NUM_CLASSES];
+		std::vector<cv::Rect> boxes[NUM_CLASSES];
 
-		for (auto& output : detections)
+		for (cv::Mat& output : detections)
 		{
-			const auto num_boxes = output.rows;
+			const int num_boxes = output.rows;
 			for (int i = 0; i < num_boxes; i++)
 			{
 				float x = output.at<float>(i, 0) * frame.cols;
@@ -104,7 +104,7 @@ int main()
 
 				for (int c = 0; c < NUM_CLASSES; c++)
 				{
-					auto confidence = *output.ptr<float>(i, 5 + c);
+					float confidence = *output.ptr<float>(i, 5 + c);
 					if (confidence >= CONFIDENCE_THRESHOLD)
 					{
 						boxes[c].push_back(rect);
@@ -127,16 +127,29 @@ int main()
 
 				auto idx = indices[c][i];
 				const auto& rect = boxes[c][idx];
-				cv::rectangle(frame, cv::Point(rect.x, rect.y), cv::Point(rect.x + rect.width, rect.y + rect.height), color, 3);
+				cv::rectangle(frame,
+					cv::Point(rect.x, rect.y), 
+					cv::Point(rect.x + rect.width, rect.y + rect.height), 
+					color, 
+					3);
 
 				std::ostringstream label_ss;
 				label_ss << class_names[c] << ": " << std::fixed << std::setprecision(2) << scores[c][idx];
-				auto label = label_ss.str();
+				std::string label = label_ss.str();
 
 				int baseline;
-				auto label_bg_sz = cv::getTextSize(label.c_str(), cv::FONT_HERSHEY_COMPLEX_SMALL, 1, 1, &baseline);
-				cv::rectangle(frame, cv::Point(rect.x, rect.y - label_bg_sz.height - baseline - 10), cv::Point(rect.x + label_bg_sz.width, rect.y), color, cv::FILLED);
-				cv::putText(frame, label.c_str(), cv::Point(rect.x, rect.y - baseline - 5), cv::FONT_HERSHEY_COMPLEX_SMALL, 1, cv::Scalar(0, 0, 0));
+				cv::Size2i label_bg_sz = cv::getTextSize(label.c_str(), cv::FONT_HERSHEY_COMPLEX_SMALL, 1, 1, &baseline);
+				cv::rectangle(frame, 
+					cv::Point(rect.x, rect.y - label_bg_sz.height - baseline - 10), 
+					cv::Point(rect.x + label_bg_sz.width, rect.y), 
+					color, 
+					cv::FILLED);
+				cv::putText(frame,
+					label.c_str(),
+					cv::Point(rect.x, rect.y - baseline - 5), 
+					cv::FONT_HERSHEY_COMPLEX_SMALL,
+					1, 
+					cv::Scalar(0, 0, 0));
 			}
 		}
 

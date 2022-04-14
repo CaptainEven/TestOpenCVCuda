@@ -51,7 +51,7 @@ int main()
 
 	cv::VideoCapture source("yolo_test.mp4");
 
-	auto net = cv::dnn::readNetFromDarknet("yolo/yolov4-tiny.cfg", 
+	auto net = cv::dnn::readNetFromDarknet("yolo/yolov4-tiny.cfg",
 		"yolo/yolov4-tiny.weights");
 	if (CUDA)  // GPU
 	{
@@ -128,9 +128,9 @@ int main()
 				auto idx = indices[c][i];
 				const auto& rect = boxes[c][idx];
 				cv::rectangle(frame,
-					cv::Point(rect.x, rect.y), 
-					cv::Point(rect.x + rect.width, rect.y + rect.height), 
-					color, 
+					cv::Point(rect.x, rect.y),
+					cv::Point(rect.x + rect.width, rect.y + rect.height),
+					color,
 					3);
 
 				std::ostringstream label_ss;
@@ -138,17 +138,21 @@ int main()
 				std::string label = label_ss.str();
 
 				int baseline;
-				cv::Size2i label_bg_sz = cv::getTextSize(label.c_str(), cv::FONT_HERSHEY_COMPLEX_SMALL, 1, 1, &baseline);
-				cv::rectangle(frame, 
-					cv::Point(rect.x, rect.y - label_bg_sz.height - baseline - 10), 
-					cv::Point(rect.x + label_bg_sz.width, rect.y), 
-					color, 
+				cv::Size2i label_bg_sz = cv::getTextSize(label.c_str(),
+					cv::FONT_HERSHEY_COMPLEX_SMALL,
+					1,
+					1,
+					&baseline);
+				cv::rectangle(frame,
+					cv::Point(rect.x, rect.y - label_bg_sz.height - baseline - 10),
+					cv::Point(rect.x + label_bg_sz.width, rect.y),
+					color,
 					cv::FILLED);
 				cv::putText(frame,
 					label.c_str(),
-					cv::Point(rect.x, rect.y - baseline - 5), 
+					cv::Point(rect.x, rect.y - baseline - 5),
 					cv::FONT_HERSHEY_COMPLEX_SMALL,
-					1, 
+					1,
 					cv::Scalar(0, 0, 0));
 			}
 		}
@@ -163,9 +167,22 @@ int main()
 		auto stats = stats_ss.str();
 
 		int baseline;
-		auto stats_bg_sz = cv::getTextSize(stats.c_str(), cv::FONT_HERSHEY_COMPLEX_SMALL, 1, 1, &baseline);
-		cv::rectangle(frame, cv::Point(0, 0), cv::Point(stats_bg_sz.width, stats_bg_sz.height + 10), cv::Scalar(0, 0, 0), cv::FILLED);
-		cv::putText(frame, stats.c_str(), cv::Point(0, stats_bg_sz.height + 5), cv::FONT_HERSHEY_COMPLEX_SMALL, 1, cv::Scalar(255, 255, 255));
+		auto stats_bg_sz = cv::getTextSize(stats.c_str(),
+			cv::FONT_HERSHEY_COMPLEX_SMALL,
+			1,
+			1,
+			&baseline);
+		cv::rectangle(frame, 
+			cv::Point(0, 0),
+			cv::Point(stats_bg_sz.width, stats_bg_sz.height + 10),
+			cv::Scalar(0, 0, 0),
+			cv::FILLED);
+		cv::putText(frame, 
+			stats.c_str(), 
+			cv::Point(0, stats_bg_sz.height + 5),
+			cv::FONT_HERSHEY_COMPLEX_SMALL,
+			1,
+			cv::Scalar(255, 255, 255));
 
 		cv::namedWindow("output");
 		cv::imshow("output", frame);
